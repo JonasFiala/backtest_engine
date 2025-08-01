@@ -1,33 +1,35 @@
 from typing import List, Optional
-from .datastruct import Position, Trade, Limit_order, Data
+from .datastruct import Position, Trade, Limit_order, Timeframe
 import pandas as pd
 
+
+
 class Broker:
-    def __init__(self, cash: float = 10_000):
-        global DATA
+    def __init__(self, data: dict[str, Timeframe], cash: float = 10_000):
         self.positions: List[Position] = []
         self.initial_cash = cash
         self.cash = cash
         self.orders: List[Limit_order] = [] 
         self.trades: List[Trade] = []
-        self.equity = []
-        self.data: dict[str, Data] = DATA
+        self.equity: List[float] = [i+10000-i for i in range(60)]
+        self.data: dict[str, Timeframe] = data
 
     def current_price(self, symbol: str) -> pd.Series:
         return self.data[symbol][0]
     
     @property
     def current_time(self) -> pd.Timestamp:
-        first_key = list(self.data.keys())[0]
-        return self.data[first_key][0].name
+        return self.data[list(self.data.keys())[0]][0].name
 
     def market_order(self, symbol: str, side: str, size: float, 
                      stop_loss: Optional[float] = None,
-                     take_profit: Optional[float] = None) -> bool:
+                     take_profit: Optional[float] = None) -> Position:
         """Executes a market order"""
-        cash_amount = self.cash * size 
-        if cash_amount > self.cash:
-            raise ValueError(f"Insufficient cash to open position: {cash_amount} > {self.cash}")
+        cash_amount = self.cash * size
+        # cash_amount = self.equity[-1] * size 
+        # if cash_amount > self.cash:
+        #     cash_amount = self.cash
+            # raise ValueError(f"Insufficient cash to open position: {cash_amount} > {self.cash}")
         
         fliper = 1 if side == "long" else -1
         try:
@@ -50,7 +52,7 @@ class Broker:
         )
         self.positions.append(position)
         self.cash -= cash_amount
-        print(f"Market position opened: {position}\n")
+        # print(f"Market position opened: {position}\n")
         return position
 
 
@@ -71,10 +73,10 @@ class Broker:
             take_profit=take_profit
         )
         self.orders.append(order)
-        print(f"Limit order placed: {order}\n")
+        # print(f"Limit order placed: {order}\n")
         return True
 
-    def close_position(self, position: Position) -> None:
+    def close_position(self, position: Position) -> Trade:
         """Closes a position at current price"""
         price = self.current_price(position.symbol)["Close"] 
         pnl = position.calculate_pnl(price)
@@ -93,13 +95,15 @@ class Broker:
             take_profit=position.take_profit
         )
         self.trades.append(trade)
+        print(f"self.positions {self.positions}\n")
         self.positions.remove(position)
-        print(f"Position closed: {trade}\n")
+        # print(f"Position closed: {trade}\n")
+        return trade
 
     def update_equity(self) -> None:
         "Logs the current equity value"
         positions_value = sum(
-            pos.calculate_pnl(self.current_price(pos.symbol)) 
+            pos.calculate_pnl(self.current_price(pos.symbol)["Close"]) + pos.size
             for pos in self.positions
         )
         self.equity.append(self.cash + positions_value)
@@ -131,10 +135,30 @@ class Broker:
             if position.stop_loss:
                 if (position.side == "long" and self.current_price(position.symbol)["Low"] <= position.stop_loss) or \
                    (position.side == "short" and self.current_price(position.symbol)["High"] >= position.stop_loss):
-                    self.close_position(position, position.stop_loss)
+                    self.close_position(position)
                     continue
                     
             if position.take_profit:
                 if (position.side == "long" and self.current_price(position.symbol)["High"] >= position.take_profit) or \
                    (position.side == "short" and self.current_price(position.symbol)["Low"] <= position.take_profit):
-                    self.close_position(position, position.take_profit)
+                    self.close_position(position)
+
+    def max_drawdown(self) -> float:
+        """Calculates the maximum drawdown"""
+        top = 0
+        max_drawdown = 0
+        for i in range(1, len(self.equity)):
+            if self.equity[i] > top:
+                top = self.equity[i]
+            elif top > 0:
+                drawdown = 1- (self.equity[i] / top)
+                if drawdown > 0:
+                    max_drawdown = max(max_drawdown, drawdown)
+        return f"{round(max_drawdown, 4)*100}%"
+
+    def winrate(self) -> float:
+        """Calculates the winrate of trades"""
+        if not self.trades:
+            return "Winrate: 0.00%"
+        wins = sum(1 for trade in self.trades if trade.pnl > 0)
+        return f"{round(wins / len(self.trades) * 100, 2)}%" if len(self.trades) > 0 else "0.00%"
