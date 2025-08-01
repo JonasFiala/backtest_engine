@@ -1,7 +1,7 @@
-from bot.broker import Broker
+from broker import Broker
 import pandas as pd
 from typing import List, Optional, Union
-from bot.datastruct import Timeframe, Index, Indicator
+from datastruct import Timeframe, Index, Indicator
 from dataclasses import dataclass
 from tqdm import tqdm
 
@@ -218,5 +218,6 @@ conect_df.to_csv("connected_data.csv")
 
 print([i.value for i in indexes.values()])
 pbar.close()
+
 
 
