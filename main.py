@@ -1,7 +1,7 @@
-from broker import Broker
+from bot.broker import Broker
 import pandas as pd
 from typing import List, Optional, Union
-from datastruct import Timeframe, Index, Indicator
+from bot.datastruct import Timeframe, Index, Indicator
 from dataclasses import dataclass
 from tqdm import tqdm
 
@@ -47,7 +47,8 @@ from tqdm import tqdm
 # === Step 5: Join 1M and 1H data ===
 """
 
-
+opened = 0
+closed = 0
 class Strategy:
     def __init__(self, name: str, requirements: dict[str, List[str]], timeframe: str, indicators: Optional[List[str]] = None, params: Optional[dict] = None):
         self.name = name
@@ -55,6 +56,7 @@ class Strategy:
         self.timeframe = timeframe
         self.indicators = indicators if indicators is not None else []
         self.params = params if params is not None else {}
+        self.position = None
 class strategy1(Strategy):
     def __init__(self, timeframe: str):
         super().__init__(
@@ -65,11 +67,24 @@ class strategy1(Strategy):
 
     def step(self, data: Union[Timeframe, List[Timeframe]]):
         data = data["btc"]
-        if hasattr(self, "position") and self.position is not None:
-            print(f"Checking position: {self.position}")
+        # if self.position is not None:
+        #     print(f"Checking position: {self.position}")
+        #     print(f"strategy_tf{self.timeframe}")
+        #     print(f"positions: {broker.positions}")
+        #     broker.close_position(self.position)
+        #     self.position = None
+        #     global closed
+        #     closed+=1
+        #     print(f"closed:{closed}")
+        # if data[0]["Close"] < data[0]["Open"]:
+        #     self.position = broker.market_order("btc", "long", 0.1, stop_loss=100, take_profit=200)
+        #     global opened
+        #     opened += 1
+        #     print(f"opened: {opened, len(broker.positions)}")
+        if self.position is not None:
             broker.close_position(self.position)
         if data[0]["Close"] < data[0]["Open"]:
-            self.position = broker.market_order("btc", "long", 0.1, stop_loss=100, take_profit=200)
+            broker.market_order("btc", "long", 0.1)
 
 def gen_indexes(tf_list: List[str]) -> dict[str, Index]:
     """initializes indexes of chosen tfs"""
@@ -189,7 +204,7 @@ pbar = tqdm(total=len(base_data_first), desc="Running Engine", unit="steps")
 
 broker = Broker(data["1min"])
 
-for i in range(len(base_data_first)):
+for i in range(1,len(base_data_first)):
     broker.check_orders()
     broker.check_positions()
     broker.update_equity()
@@ -218,6 +233,5 @@ conect_df.to_csv("connected_data.csv")
 
 print([i.value for i in indexes.values()])
 pbar.close()
-
 
 

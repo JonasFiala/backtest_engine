@@ -144,15 +144,33 @@ class Data:
     #             return None
     #     raise KeyError(f"Indicator '{indicator_key}' not found.")
 
-@dataclass(frozen=True)
+
 class Position:
-    symbol: str
-    side: Literal["long", "short"]
-    entry_price: float
-    size: float
-    entry_time: pd.Timestamp
-    stop_loss: Optional[float] = None
-    take_profit: Optional[float] = None
+    def __init__(
+        self,
+        symbol: str,
+        side: Literal["long", "short"],
+        entry_price: float,
+        size: float,
+        entry_time: pd.Timestamp,
+        stop_loss: Optional[float] = None,
+        take_profit: Optional[float] = None,
+    ):
+        self.symbol = symbol
+        self.side = side
+        self.entry_price = entry_price
+        self.size = size
+        self.entry_time = entry_time
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit
+
+    def __repr__(self):
+        return (
+            f"Position(symbol={self.symbol!r}, side={self.side!r}, "
+            f"entry_price={self.entry_price!r}, size={self.size!r}, "
+            f"entry_time={self.entry_time!r}, stop_loss={self.stop_loss!r}, "
+            f"take_profit={self.take_profit!r})"
+        )
 
     @property
     def units(self) -> float:
@@ -161,6 +179,9 @@ class Position:
     def calculate_pnl(self, current_price: float) -> float:
         multiplier = 1 if self.side == "long" else -1
         return (current_price - self.entry_price) * self.units * multiplier
+    
+    def __eq__(self, other):
+        return isinstance(other, Position) and self is other  
 
 @dataclass(frozen=True)
 class Limit_order:

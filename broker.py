@@ -96,7 +96,11 @@ class Broker:
         )
         self.trades.append(trade)
         print(f"self.positions {self.positions}\n")
-        self.positions.remove(position)
+        try:
+            self.positions.remove(position)
+        except:
+            print(f"Position {position} not found in current positions. Trades {self.trades}")
+            exit()
         # print(f"Position closed: {trade}\n")
         return trade
 
