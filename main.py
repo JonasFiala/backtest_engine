@@ -109,7 +109,7 @@ base_data:dict[str, pd.DataFrame] = {}
 base_data["btc"] = btc_data
 base_data["eth"] = eth_data
 
-strategies: List[Strategy] = [strategy1(timeframe="1min")]
+strategies: List[Strategy] = [strategy1(timeframe="4h")]
 
 chosen_tf: dict[str, List[str]] = get_chosen_tf(strategies)
 all_tf: List[str] = list(set([tf for tfs in chosen_tf.values() for tf in tfs]))
@@ -157,6 +157,5 @@ print(conect_df)
 conect_df.to_csv("connected_data.csv")
 
 
-print([i.value for i in indexes.values()])
 
 
