@@ -37,7 +37,7 @@ class Broker:
             check_tp = take_profit*fliper < self.current_price(symbol)["Close"]*fliper
             if check_sl or check_tp:
                 raise ValueError("\n\n!!Stop loss or take profit is not valid for current price!!\n\n")
-        except:
+        except TypeError:
             pass
 
 
@@ -73,7 +73,7 @@ class Broker:
             take_profit=take_profit
         )
         self.orders.append(order)
-        # print(f"Limit order placed: {order}\n")
+        print(f"Limit order placed: {order}\n")
         return True
 
     def close_position(self, position: Position) -> Trade:
@@ -95,13 +95,8 @@ class Broker:
             take_profit=position.take_profit
         )
         self.trades.append(trade)
-        print(f"self.positions {self.positions}\n")
-        try:
-            self.positions.remove(position)
-        except:
-            print(f"Position {position} not found in current positions. Trades {self.trades}")
-            exit()
-        # print(f"Position closed: {trade}\n")
+        # print(f"self.positions {self.positions}\n")
+        self.positions.remove(position)
         return trade
 
     def update_equity(self) -> None:
@@ -146,7 +141,7 @@ class Broker:
                 if (position.side == "long" and self.current_price(position.symbol)["High"] >= position.take_profit) or \
                    (position.side == "short" and self.current_price(position.symbol)["Low"] <= position.take_profit):
                     self.close_position(position)
-
+    @property
     def max_drawdown(self) -> float:
         """Calculates the maximum drawdown"""
         top = 0
@@ -159,7 +154,7 @@ class Broker:
                 if drawdown > 0:
                     max_drawdown = max(max_drawdown, drawdown)
         return f"{round(max_drawdown, 4)*100}%"
-
+    @property
     def winrate(self) -> float:
         """Calculates the winrate of trades"""
         if not self.trades:

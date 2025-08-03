@@ -2,51 +2,6 @@ from dataclasses import dataclass
 from typing import Optional, Literal, Union, List
 import pandas as pd
 
-import pandas as pd
-
-
-"""
-
-@dataclass
-class Index:
-    value: int = 0
-
-class Indicator:
-    def __init__(self, df: pd.DataFrame, timeframe: str, index: Optional[Index] = None):
-        self.df: pd.DataFrame = df
-        self.timeframe: str = timeframe
-        self.index: Index = index if index is not None else Index()
-
-    def __getitem__(self, item: Union[str, int]) -> pd.Series:
-        if isinstance(item, str):
-            return self.df[item]
-        elif isinstance(item, int):
-            return self.df.iloc[item]
-        else:
-            raise TypeError("Key must be a string or an integer index.")
-
-
-
-
-class Timeframe():
-    def __init__(self, df: pd.DataFrame, timeframe: str, index: Optional[Index]):
-        self.df: pd.DataFrame = df
-        self.timeframe: str = timeframe
-        self.index: Index = index if index is not None else Index()
-        self.indicators: List[Indicator] = []
-
-    def __getitem__(self, item: Union[str, int]) -> pd.Series:
-        if isinstance(item, str):
-            return self.df[item]
-        elif isinstance(item, int):
-            target_index = self.index.value + item
-            try:
-                return self.df.iloc[target_index]
-            except IndexError:
-                return None
-        else:
-            raise TypeError("Key must be a string or an integer index.")
-"""
 
 @dataclass
 class Index:
@@ -183,25 +138,62 @@ class Position:
     def __eq__(self, other):
         return isinstance(other, Position) and self is other  
 
-@dataclass(frozen=True)
-class Limit_order:
-    symbol: str
-    side: Literal["long", "short"]
-    price: float
-    size: float
-    time_limit: Optional[pd.Timestamp] = None
-    stop_loss: Optional[float] = None
-    take_profit: Optional[float] = None
 
-@dataclass(frozen=True)
+class Limit_order:
+    def __init__(
+        self,
+        symbol: str,
+        side: Literal["long", "short"],
+        price: float,
+        size: float,
+        time_limit: Optional[pd.Timestamp] = None,
+        stop_loss: Optional[float] = None,
+        take_profit: Optional[float] = None,
+    ):
+        self.symbol = symbol
+        self.side = side
+        self.price = price
+        self.size = size
+        self.time_limit = time_limit
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit
+
+    def __repr__(self):
+        return (
+            f"Limit_order(symbol={self.symbol}, side={self.side}, price={self.price}, "
+            f"size={self.size}, time_limit={self.time_limit}, stop_loss={self.stop_loss}, "
+            f"take_profit={self.take_profit})"
+        )
+
 class Trade:
-    symbol: str
-    side: Literal["long", "short"]
-    entry_price: float
-    exit_price: float
-    size: float
-    entry_time: pd.Timestamp
-    exit_time: pd.Timestamp
-    pnl: float
-    stop_loss: Optional[float] = None
-    take_profit: Optional[float] = None
+    def __init__(
+        self,
+        symbol: str,
+        side: Literal["long", "short"],
+        entry_price: float,
+        exit_price: float,
+        size: float,
+        entry_time: pd.Timestamp,
+        exit_time: pd.Timestamp,
+        pnl: float,
+        stop_loss: Optional[float] = None,
+        take_profit: Optional[float] = None,
+    ):
+        self.symbol = symbol
+        self.side = side
+        self.entry_price = entry_price
+        self.exit_price = exit_price
+        self.size = size
+        self.entry_time = entry_time
+        self.exit_time = exit_time
+        self.pnl = pnl
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit
+
+    def __repr__(self):
+        return (
+            f"Trade(symbol={self.symbol}, side={self.side}, entry_price={self.entry_price}, "
+            f"exit_price={self.exit_price}, size={self.size}, entry_time={self.entry_time}, "
+            f"exit_time={self.exit_time}, pnl={self.pnl}, stop_loss={self.stop_loss}, "
+            f"take_profit={self.take_profit})"
+        )
